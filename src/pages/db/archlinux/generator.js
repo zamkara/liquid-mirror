@@ -62,17 +62,12 @@ function dummySig() {
   return crypto.getRandomValues(new Uint8Array(512));
 }
 
-function generatePackageList(packages) {
-  return packages.map(pkg => pkg.asset.name).join('\n');
-}
-
 export async function GET(req) {
   const { pathname, searchParams } = new URL(req.url);
   const isFiles = pathname.endsWith(".files");
   const isSig = pathname.endsWith(".sig");
   const isPkg = searchParams.has('pkg');
-  const isPkgList = pathname.endsWith(".pkgs");
-  const base = pathname.replace(/^.*\/(liquid\.(db|files|pkgs))(\.sig)?$/, "$1");
+  const base = pathname.replace(/^.*\/(liquid\.(db|files))(\.sig)?$/, "$1");
 
   try {
     if (isPkg) {
@@ -114,7 +109,7 @@ export async function GET(req) {
     const files = [];
     const encoder = new TextEncoder();
 
-    // Get all valid packages
+    // MODIFIED SECTION - Get 3 latest valid packages
     const validPackages = [];
     for (const release of releases) {
       for (const asset of release.assets || []) {
@@ -129,22 +124,11 @@ export async function GET(req) {
       }
     }
 
-    // Sort by date
+    // Sort by date and take top 3
     validPackages.sort((a, b) => b.date - a.date);
     const latestPackages = validPackages.slice(0, 3);
 
-    if (isPkgList) {
-      // Return plain text list of all package names
-      const pkgList = validPackages.map(p => p.asset.name).join('\n');
-      return new Response(pkgList, {
-        headers: {
-          'Content-Type': 'text/plain',
-          'Cache-Control': 'public, max-age=3600'
-        }
-      });
-    }
-
-    // Process only the 3 latest packages for db/files
+    // Process only these 3 packages
     for (const {asset, release} of latestPackages) {
       const releaseVersion = release.tag_name;
       const match = asset.name.match(/^(linux-upstream(?:-[a-z-]+)?)-(\d+\.\d+\.\d+_liquid-\d+)-(x86_64)\.pkg\.tar\.zst$/);
