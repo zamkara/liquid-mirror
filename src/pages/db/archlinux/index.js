@@ -1,3 +1,4 @@
+// src/pages/db/archlinux/index.js
 export async function GET() {
   const base = '/db/archlinux/';
   const files = [
@@ -14,24 +15,11 @@ export async function GET() {
   <meta charset="UTF-8" />
   <title>Index of ${base}</title>
   <style>
-    body {
-      font-family: monospace;
-      padding: 2rem;
-    }
-    h1 {
-      margin-bottom: 1rem;
-    }
-    a {
-      color: #1e88e5;
-      text-decoration: none;
-    }
-    a:hover {
-      text-decoration: underline;
-    }
-    .listing {
-      margin-top: 1rem;
-      line-height: 1.6;
-    }
+    body { font-family: monospace; padding: 2rem; }
+    h1 { margin-bottom: 1rem; }
+    a { color: #1e88e5; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .listing { margin-top: 1rem; line-height: 1.6; }
   </style>
 </head>
 <body>
@@ -41,7 +29,7 @@ export async function GET() {
   </div>
 </body>
 </html>
-`.trim();
+  `.trim();
 
   return new Response(html, {
     headers: {
