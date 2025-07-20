@@ -7,44 +7,87 @@ import { SITE_TITLE, SITE_DESCRIPTION } from '../consts';
 
 <!doctype html>
 <html lang="en">
-	<head>
-		<BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
-	</head>
-	<body>
-		<Header />
-		<main>
-			<h1>🧑‍🚀 Hello, Astronaut!</h1>
-			<p>
-				Welcome to the official <a href="https://astro.build/">Astro</a> blog starter template. This
-				template serves as a lightweight, minimally-styled starting point for anyone looking to build
-				a personal website, blog, or portfolio with Astro.
-			</p>
-			<p>
-				This template comes with a few integrations already configured in your
-				<code>astro.config.mjs</code> file. You can customize your setup with
-				<a href="https://astro.build/integrations">Astro Integrations</a> to add tools like Tailwind,
-				React, or Vue to your project.
-			</p>
-			<p>Here are a few ideas on how to get started with the template:</p>
-			<ul>
-				<li>Edit this page in <code>src/pages/index.astro</code></li>
-				<li>Edit the site header items in <code>src/components/Header.astro</code></li>
-				<li>Add your name to the footer in <code>src/components/Footer.astro</code></li>
-				<li>Check out the included blog posts in <code>src/content/blog/</code></li>
-				<li>Customize the blog post page layout in <code>src/layouts/BlogPost.astro</code></li>
-			</ul>
-			<p>
-				Have fun! If you get stuck, remember to <a href="https://docs.astro.build/"
-					>read the docs
-				</a> or <a href="https://astro.build/chat">join us on Discord</a> to ask questions.
-			</p>
-			<p>
-				Looking for a blog template with a bit more personality? Check out <a
-					href="https://github.com/Charca/astro-blog-template"
-					>astro-blog-template
-				</a> by <a href="https://twitter.com/Charca">Maxi Ferreira</a>.
-			</p>
-		</main>
-		<Footer />
-	</body>
+  <head>
+    <BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
+  </head>
+  <body class="bg-background text-foreground">
+    <Header />
+    <main class="px-4 py-10 max-w-5xl mx-auto">
+      <div class="mb-10">
+        <h1 class="text-3xl font-bold tracking-tight mb-2">🪐 Liquid Kernel Mirror</h1>
+        <p class="text-muted-foreground">Browse & download prebuilt Linux kernels for all major distros</p>
+      </div>
+
+      <div id="file-list">
+        <p class="text-muted-foreground">⏳ Loading...</p>
+      </div>
+    </main>
+    <Footer />
+
+    <script type="module">
+      async function loadFiles() {
+        const container = document.getElementById("file-list");
+        container.innerHTML = '<p class="text-muted-foreground">⏳ Loading...</p>';
+
+        try {
+          const res = await fetch("https://cors.zamkara.tech/?https://liquid.zamkara.tech/api/latest");
+          if (!res.ok) throw new Error("Status: " + res.status);
+          const files = await res.json();
+
+          const versions = new Map();
+          for (const file of files) {
+            if (!versions.has(file.version)) versions.set(file.version, []);
+            versions.get(file.version).push(file);
+          }
+
+          if (files.length === 0) {
+            container.innerHTML = '<p class="text-red-500">❌ No data found.</p>';
+            return;
+          }
+
+          let html = '';
+          for (const [version, versionFiles] of versions.entries()) {
+            const byExt = (ext) => versionFiles.filter(f => f.name.endsWith(ext));
+            const deb = byExt('.deb');
+            const rpm = byExt('.rpm');
+            const arch = byExt('.pkg.tar.zst');
+            const others = versionFiles.filter(f =>
+              !f.name.endsWith('.deb') &&
+              !f.name.endsWith('.rpm') &&
+              !f.name.endsWith('.pkg.tar.zst')
+            );
+
+            const renderGroup = (title, list) => list.length === 0 ? '' : `
+              <div class="mb-4">
+                <h3 class="text-sm font-medium text-muted-foreground">${title}</h3>
+                <ul class="list-disc ml-5 mt-2 space-y-1">
+                  ${list.map(f => `
+                    <li>
+                      <a href="${f.url}" class="text-blue-600 hover:underline" download>
+                        ${f.name} <span class="text-muted-foreground text-xs">(${f.size})</span>
+                      </a>
+                    </li>`).join('')}
+                </ul>
+              </div>`;
+
+            html += `
+              <div class="rounded-xl border bg-card text-card-foreground shadow p-6">
+                <h2 class="text-lg font-semibold mb-2">${version}</h2>
+                ${renderGroup('deb', deb)}
+                ${renderGroup('rpm', rpm)}
+                ${renderGroup('arch', arch)}
+                ${renderGroup('others', others)}
+              </div>`;
+          }
+
+          container.innerHTML = html;
+        } catch (err) {
+          console.error("Failed to fetch files:", err);
+          container.innerHTML = '<p class="text-red-500">❌ Failed to load data. Please try again later.</p>';
+        }
+      }
+
+      loadFiles();
+    </script>
+  </body>
 </html>
